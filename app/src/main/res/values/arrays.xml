@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- LSPosed 推荐作用域声明(标准形式:manifest 以 android:resource 引用本数组) -->
+    <string-array name="xposedscope">
+        <item>com.android.systemui</item>
+    </string-array>
+</resources>

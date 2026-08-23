@@ -12,14 +12,14 @@
         <meta-data
             android:name="xposeddescription"
             android:value="音量面板多应用音量分页:第1页保持默认媒体/铃声/闹钟三列,第2页承载各应用音量列,两区之间圆点指示切换" />
-        <!-- Api 版本 101 -->
+        <!-- Api 版本 100(主流 LSPosed 兼容上限;如你的管理器支持更高可自行调回 101) -->
         <meta-data
             android:name="xposedminversion"
-            android:value="101" />
-        <!-- 作用域:插件类运行在 SystemUI 进程内 -->
+            android:value="100" />
+        <!-- 作用域声明:标准 resource-array 形式,LSPosed 会自动推荐勾选「系统界面」 -->
         <meta-data
             android:name="xposedscope"
-            android:value="com.android.systemui" />
+            android:resource="@array/xposedscope" />
 
     </application>
 

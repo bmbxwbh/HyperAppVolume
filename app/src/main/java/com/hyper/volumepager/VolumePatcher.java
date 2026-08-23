@@ -59,6 +59,13 @@ public final class VolumePatcher {
     /** 每页容纳的应用音量条数(第1页为原生默认三列,不受此值影响) */
     public static final int PER_PAGE = 3;
 
+    private static volatile boolean installedFlag = false;
+
+    /** 捕获器轮询线程据此提前退出 */
+    public static boolean isInstalled() {
+        return installedFlag;
+    }
+
     private static final long ANIM_MS = 260L;
     private static final String PLUGIN_PKG = "miui.systemui.plugin";
 
@@ -245,6 +252,7 @@ public final class VolumePatcher {
         } catch (Throwable ignore) { }
 
         Logx.i("volume pager hooks installed (dynamic pages, PER_PAGE=" + PER_PAGE + ")");
+        installedFlag = true;
     }
 
     // ==================================================================
