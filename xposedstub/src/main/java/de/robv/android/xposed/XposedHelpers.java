@@ -42,6 +42,11 @@ public final class XposedHelpers {
     }
 
     @SuppressWarnings("unused")
+    public static Object getStaticObjectField(Class<?> clazz, String fieldName) {
+        throw new UnsupportedOperationException("stub");
+    }
+
+    @SuppressWarnings("unused")
     public static Object callMethod(Object receiver, String methodName, Object... args) {
         throw new UnsupportedOperationException("stub");
     }
