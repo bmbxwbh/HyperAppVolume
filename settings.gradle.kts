@@ -11,9 +11,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://api.xposed.info/")
     }
 }
 
 rootProject.name = "HyperVolumePager"
 include(":app")
+include(":xposedstub")

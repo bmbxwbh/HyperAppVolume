@@ -28,6 +28,7 @@ android {
 }
 
 dependencies {
-    // 经典 Xposed Bridge API(compileOnly,运行时由 LSPosed 提供)
-    compileOnly("de.robv.android.xposed:api:82")
+    // Xposed API 以源码桩形式内置于 :xposedstub(compileOnly,不打进 APK)
+    // 运行时由 LSPosed 注入真实实现;不再依赖外部 maven 构件
+    compileOnly(project(":xposedstub"))
 }
