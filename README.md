@@ -54,7 +54,6 @@ app/src/main/java/com/hyper/volumepager/
 
 ## 注意事项
 
-- 清单声明 `xposedminversion=101`;若你的 LSPosed 管理器不认 101,把
-  `app/src/main/AndroidManifest.xml` 中该值改为 `100` 或 `93` 重新构建即可(hook 代码为经典 Bridge API,全版本兼容)。
+- 清单声明 `xposedminversion=101`(按需调整;hook 代码为经典 Bridge API,全版本兼容)。
 - 控制中心形态、⋯按钮、铃声模式区、定时器、动画类全部未触碰,异常时模块自动静默回退原生行为。
 - 调试:`adb logcat -s HyperVolumePager`。
