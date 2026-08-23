@@ -49,7 +49,7 @@ import de.robv.android.xposed.XposedHelpers;
  *  H3  $VolumeColumns.addView(View[/int]) before 标记列入胶片条并吞掉原调用
  *  H4  $VolumeColumns.removeView(View) before 从实际父容器移除并吞掉原调用
  *  H5  $VolumeColumns.updateExpandedH(Z) before/after 归还/借出 + 收起复位 + 圆点同步
- *  补充 onStateChangedH*/setActiveStream(IZ) after 折叠态活动流变化补借出
+ *  补充 onStateChangedH 系列 与 setActiveStream(IZ) 的 after:折叠态活动流变化补借出
  */
 public final class VolumePatcher {
 
