@@ -10,8 +10,8 @@ android {
         applicationId = "com.hyper.volumepager"
         minSdk = 30
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.3.0"
+        versionCode = 10
+        versionName = "1.3.2"
     }
 
     buildTypes {
@@ -30,4 +30,6 @@ android {
 dependencies {
     // libxposed 现代API(compileOnly,运行时由管理器注入实现)
     compileOnly("io.github.libxposed:api:102.0.0")
+    // 传统桥桩(仅供 LegacyProbe 路径探针编译使用)
+    compileOnly(project(":xposedstub"))
 }

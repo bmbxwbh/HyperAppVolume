@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 现代(libxposed)规范:模块描述通过 application android:description 资源提供 -->
+    <string name="module_desc">音量面板分页:第1页默认媒体/铃声/闹钟,发声应用音量按每页3条动态分页</string>
+</resources>

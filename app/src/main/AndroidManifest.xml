@@ -3,6 +3,7 @@
 
     <application
         android:label="HyperOS 音量面板分页"
+        android:description="@string/module_desc"
         android:allowBackup="false">
 
         <!-- Xposed 模块声明 -->
