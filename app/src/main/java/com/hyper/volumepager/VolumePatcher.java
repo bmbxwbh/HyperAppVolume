@@ -20,6 +20,7 @@ import java.util.Set;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedInterface.Chain;
 import io.github.libxposed.api.XposedInterface.HookHandle;
+import io.github.libxposed.api.XposedInterface.Hooker;
 
 /**
  * 音量面板分页改造主体 —— libxposed API 102 全量迁移版。
