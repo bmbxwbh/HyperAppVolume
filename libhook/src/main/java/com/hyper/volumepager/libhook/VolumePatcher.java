@@ -119,7 +119,7 @@ public final class VolumePatcher {
 
         // ---------------- H2 addColumn(IZZ) ----------------
         hookByTypes(vcClass, "addColumn",
-                new Class<?>[]{boolean.class, boolean.class, boolean.class}, "H2",
+                new Class<?>[]{int.class, boolean.class, boolean.class}, "H2",
                 chain -> {
                     List<Object> a = chain.getArgs();
                     controller = chain.getThisObject(); // 自愈同步
