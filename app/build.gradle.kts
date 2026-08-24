@@ -10,8 +10,8 @@ android {
         applicationId = "com.hyper.volumepager"
         minSdk = 30
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.2.1"
     }
 
     buildTypes {
@@ -24,6 +24,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        getByName("main") {
+            // 显式确保 META-INF/xposed/* 源文件参与打包
+            resources.srcDirs("src/main/resources")
+        }
     }
 
     packaging {
