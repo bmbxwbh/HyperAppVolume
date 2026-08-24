@@ -40,4 +40,6 @@ android {
 
 dependencies {
     implementation(project(":libhook"))
+    // 供 app 层 R8 解析 libhook 中对 libxposed API 的引用(compileOnly 不进 APK)
+    compileOnly("io.github.libxposed:api:102.0.0")
 }
