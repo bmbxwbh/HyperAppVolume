@@ -37,10 +37,24 @@ public final class VolumePatcher {
     public static volatile boolean ENABLED = true;
     public static final int PER_PAGE = 3;
 
+    // ==================================================================
+    // ★ 面板位置重定向(修改这三个常量并重新构建即可放到指定位置) ★
+    // ==================================================================
+    /** false=保持原生位置 */
+    public static final boolean POSITION_OVERRIDE_ENABLED = true;
+    /** 目标位置(Gravity 组合):底部居中 / 右侧垂直居中 / 顶部居中 … */
+    public static final int POSITION_GRAVITY =
+            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+    /** 水平偏移(dp,正=向右) */
+    public static final int POSITION_X_DP = 0;
+    /** 垂直偏移(dp,正=向下) */
+    public static final int POSITION_Y_DP = 0;
+
     private static volatile boolean installedFlag = false;
     private static volatile XposedInterface xp;
     private static volatile Class<?> vcClass;
     private static volatile Class<?> colsClass;
+    private static volatile Class<?> viewCls;   // MiuiVolumeDialogView
     private static volatile int ID_container = 0;
 
     /** 控制器实例 → 各自的注入状态 */
@@ -98,6 +112,20 @@ public final class VolumePatcher {
                     "com.android.systemui.miui.volume.VolumePanelViewController");
             colsClass = cl.loadClass(
                     "com.android.systemui.miui.volume.VolumePanelViewController$VolumeColumns");
+            viewCls = cl.loadClass(
+                    "com.android.systemui.miui.volume.MiuiVolumeDialogView");
+
+            // H-POS 位置重定向(每次原生布局更新后覆写面板位置)
+            hookByTypes(viewCls, "updateDialogViewLP", new Class<?>[0], "HPOS",
+                    chain -> {
+                        Object r = chain.proceed();
+                        try {
+                            applyPositionOverride(chain.getThisObject());
+                        } catch (Throwable t) {
+                            Logx.e("position override failed", t);
+                        }
+                        return r;
+                    });
 
             // H1 initPanelView
             hook1(vcClass.getDeclaredMethod("initPanelView"));
@@ -647,6 +675,28 @@ public final class VolumePatcher {
             }
         }
         throw new NoSuchMethodException(name);
+    }
+
+    // ==================================================================
+    // 位置重定向
+    // ==================================================================
+
+    private static void applyPositionOverride(View panel) {
+        if (!POSITION_OVERRIDE_ENABLED || panel == null) return;
+        ViewGroup.LayoutParams lp = panel.getLayoutParams();
+        FrameLayout.LayoutParams flp;
+        if (lp instanceof FrameLayout.LayoutParams) {
+            flp = (FrameLayout.LayoutParams) lp;
+        } else {
+            flp = new FrameLayout.LayoutParams(
+                    lp == null ? ViewGroup.LayoutParams.WRAP_CONTENT : lp.width,
+                    lp == null ? ViewGroup.LayoutParams.WRAP_CONTENT : lp.height);
+        }
+        float d = panel.getContext().getResources().getDisplayMetrics().density;
+        flp.gravity = POSITION_GRAVITY;
+        flp.x = (int) (POSITION_X_DP * d);
+        flp.y = (int) (POSITION_Y_DP * d);
+        panel.setLayoutParams(flp);
     }
 
     // ==================================================================
