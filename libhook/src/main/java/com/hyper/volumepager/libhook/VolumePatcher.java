@@ -124,7 +124,10 @@ public final class VolumePatcher {
                     List<Object> a = chain.getArgs();
                     controller = chain.getThisObject(); // 自愈同步
                     if (Boolean.TRUE.equals(a.get(1)) && Boolean.TRUE.equals(a.get(2))) {
-                        PENDING_DYNAMIC.set((Integer) a.get(0));
+                        Integer sid = (Integer) a.get(0);
+                        PENDING_DYNAMIC.set(sid);
+                        Logx.i("H2 pending dynamic stream=" + sid
+                                + " (framework reported a per-app stream)");
                     }
                     Object r;
                     try {
