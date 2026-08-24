@@ -16,10 +16,11 @@
         <meta-data
             android:name="xposedminversion"
             android:value="101" />
-        <!-- 作用域声明(value 字符串形式:兼容 LSPosed/EdXposed 及 MT 等工具的解析) -->
+        <!-- 作用域声明:LSPosed 官方 Wiki 首选形式(resource-array),
+             启用模块时将自动默认勾选下列应用 -->
         <meta-data
             android:name="xposedscope"
-            android:value="com.android.systemui" />
+            android:resource="@array/xposedscope" />
 
     </application>
 
