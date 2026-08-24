@@ -22,6 +22,8 @@ import io.github.libxposed.api.XposedInterface.Chain;
 import io.github.libxposed.api.XposedInterface.HookHandle;
 import io.github.libxposed.api.XposedInterface.Hooker;
 
+import android.util.SparseArray;
+
 /**
  * 音量面板分页改造主体 —— libxposed API 102 全量迁移版。
  *
@@ -204,6 +206,11 @@ public final class VolumePatcher {
             final String id = "S1-" + m.getName();
             xp.hook(m).setId(id).intercept(chain -> {
                 Object r = chain.proceed();
+                try {
+                    dumpStreams(chain.getThisObject());
+                } catch (Throwable t) {
+                    Logx.e("dump failed", t);
+                }
                 if (!ENABLED || expanded) return r;
                 borrowActiveIfDynamic();
                 return r;
