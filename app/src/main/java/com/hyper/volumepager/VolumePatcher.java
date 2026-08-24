@@ -198,7 +198,7 @@ public final class VolumePatcher {
         for (final Method m : vcClass.getDeclaredMethods()) {
             if (!"onStateChangedH".equals(m.getName())) continue;
             final String id = "S1-" + m.getName();
-            hook(m).setId(id).intercept(chain -> {
+            xp.hook(m).setId(id).intercept(chain -> {
                 Object r = chain.proceed();
                 if (!ENABLED || expanded) return r;
                 borrowActiveIfDynamic();
