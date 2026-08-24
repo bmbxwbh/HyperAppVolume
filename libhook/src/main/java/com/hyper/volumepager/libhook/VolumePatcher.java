@@ -120,7 +120,7 @@ public final class VolumePatcher {
                     chain -> {
                         Object r = chain.proceed();
                         try {
-                            applyPositionOverride(chain.getThisObject());
+                            applyPositionOverride((View) chain.getThisObject());
                         } catch (Throwable t) {
                             Logx.e("position override failed", t);
                         }
@@ -694,8 +694,19 @@ public final class VolumePatcher {
         }
         float d = panel.getContext().getResources().getDisplayMetrics().density;
         flp.gravity = POSITION_GRAVITY;
-        flp.x = (int) (POSITION_X_DP * d);
-        flp.y = (int) (POSITION_Y_DP * d);
+        int xo = (int) (POSITION_X_DP * d);
+        int yo = (int) (POSITION_Y_DP * d);
+        // MarginLayoutParams 无 x/y 字段,偏移通过对应侧 margin 实现
+        if ((POSITION_GRAVITY & Gravity.BOTTOM) != 0) {
+            flp.bottomMargin = yo;
+        } else if ((POSITION_GRAVITY & Gravity.TOP) != 0) {
+            flp.topMargin = yo;
+        }
+        if ((POSITION_GRAVITY & Gravity.END) != 0 || (POSITION_GRAVITY & Gravity.RIGHT) != 0) {
+            flp.rightMargin = xo;
+        } else if ((POSITION_GRAVITY & Gravity.START) != 0 || (POSITION_GRAVITY & Gravity.LEFT) != 0) {
+            flp.leftMargin = xo;
+        }
         panel.setLayoutParams(flp);
     }
 
