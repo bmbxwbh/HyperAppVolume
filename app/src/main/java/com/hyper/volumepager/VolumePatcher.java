@@ -36,7 +36,7 @@ import io.github.libxposed.api.XposedInterface.HookHandle;
  *  H3  $VolumeColumns.addView(View[/int]) before 动态列入胶片条,吞掉原调用(不proceed)
  *  H4  $VolumeColumns.removeView(View)  before  从实际父容器移除并吞掉原调用
  *  H5  $VolumeColumns.updateExpandedH(Z) around 归还/借出 + 收起复位
- *  补充 onStateChangedH*/setActiveStream(IZ) after 折叠态活动流变化补借出
+ *  补充 onStateChangedH 系列 与 setActiveStream(IZ) 的 after:折叠态活动流变化补借出
  */
 public final class VolumePatcher {
 
