@@ -116,7 +116,7 @@ public class LogActivity extends Activity {
             shellAlive = true;
             ready = false;
         } catch (Throwable t) {
-            Logx.e("打开 su shell 失败", t);
+            android.util.Log.e(TAG, "打开 su shell 失败", t);
             shellAlive = false;
             return false;
         }
@@ -170,7 +170,7 @@ public class LogActivity extends Activity {
         shellAlive = false;
         ready = false;
         logcatOn = false;
-        try { if (suIn != null) { suIn.write("exit\n"); suIn.flush(); } } catch (Throwable ignored) { }
+        try { if (suIn != null) { suIn.write("exit\n".getBytes()); suIn.flush(); } } catch (Throwable ignored) { }
         try { if (suProc != null) suProc.destroy(); } catch (Throwable ignored) { }
         suProc = null;
         suIn = null;
