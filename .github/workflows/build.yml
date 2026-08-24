@@ -27,15 +27,47 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
 
+      - name: Inject META-INF/xposed into debug APK and re-sign
+        env:
+          APK_PATH: app/build/outputs/apk/debug/app-debug.apk
+        run: |
+          set -e
+          STAGE=inject_stage/META-INF/xposed
+          mkdir -p "$STAGE"
+          cp app/src/main/META-INF/xposed/java_init.list \
+             app/src/main/META-INF/xposed/module.prop \
+             app/src/main/META-INF/xposed/scope.list "$STAGE"/
+          ( cd inject_stage && zip -u "../$APK_PATH" META-INF/xposed/java_init.list META-INF/xposed/module.prop META-INF/xposed/scope.list )
+          BT=$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)
+          echo "build-tools: $BT"
+          KS="$HOME/.android/debug.keystore"
+          "$BT/zipalign" -f 4 "$APK_PATH" aligned.apk
+          "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
+              --out signed-debug.apk aligned.apk
+          "$BT/apksigner" verify signed-debug.apk
+          mv signed-debug.apk "$APK_PATH"
+          unzip -l "$APK_PATH" | grep META-INF/xposed || true
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: HyperVolumePager-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
       - name: Build release APK (unsigned)
         run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Inject META-INF/xposed into release APK
+        env:
+          APK_PATH: app/build/outputs/apk/release/app-release-unsigned.apk
+        run: |
+          set -e
+          STAGE=inject_stage_r/META-INF/xposed
+          mkdir -p "$STAGE"
+          cp app/src/main/META-INF/xposed/* "$STAGE"/
+          ( cd inject_stage_r && zip -u "../$APK_PATH" META-INF/xposed/java_init.list META-INF/xposed/module.prop META-INF/xposed/scope.list )
+          unzip -l "$APK_PATH" | grep META-INF/xposed || true
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
