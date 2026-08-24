@@ -159,7 +159,7 @@ public final class VolumePatcher {
 
             if (FORCE_LOCAL_MEDIA_AS_REMOTE) {
                 try {
-                    installPlaybackTypeForcer(xp, hostClRef);
+                    installPlaybackTypeForcer(xp, cl);
                 } catch (Throwable t) {
                     Logx.e("playback-type forcer failed", t);
                 }
