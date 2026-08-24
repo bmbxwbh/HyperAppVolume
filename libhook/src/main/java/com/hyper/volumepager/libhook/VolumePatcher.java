@@ -55,7 +55,6 @@ public final class VolumePatcher {
     private static volatile boolean dotColorsResolved = false;
     private static int colSelected = 0xE6FFFFFF;
     private static int colUnselected = 0x2EFFFFFF;
-    private static volatile int ID_container = 0;
 
     /** 单个控制器的注入状态 */
     private static final class Ctx {
