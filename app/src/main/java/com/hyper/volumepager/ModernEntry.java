@@ -10,10 +10,19 @@ import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam;
  */
 public class ModernEntry extends XposedModule {
 
-    public ModernEntry() {}
+    static {
+        // 探针1:类被JVM加载即打印(与框架回调无关)
+        Logx.i("probe: ModernEntry class initialized");
+    }
+
+    public ModernEntry() {
+        // 探针2:实例化成功即打印
+        Logx.i("probe: ModernEntry instantiated");
+    }
 
     @Override
     public void onModuleLoaded(ModuleLoadedParam param) {
+        // 探针3:框架生命周期回调到达
         Logx.i("entry loaded: process=" + param.getProcessName()
                 + ", framework=" + getFrameworkName() + " " + getFrameworkVersion()
                 + ", api=" + getApiVersion());
