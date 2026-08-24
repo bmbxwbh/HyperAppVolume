@@ -157,12 +157,51 @@ public final class VolumePatcher {
                         });
             } catch (Throwable ignore) { }
 
+            if (FORCE_LOCAL_MEDIA_AS_REMOTE) {
+                try {
+                    installPlaybackTypeForcer(xp, hostClRef);
+                } catch (Throwable t) {
+                    Logx.e("playback-type forcer failed", t);
+                }
+            }
             installedFlag = true;
-            Logx.i("volume pager hooks installed (api102, per-controller, PER_PAGE="
-                    + PER_PAGE + ")");
+            Logx.i("volume pager hooks installed (api102, per-controller, FORCER="
+                    + FORCE_LOCAL_MEDIA_AS_REMOTE + ", PER_PAGE=" + PER_PAGE + ")");
         } catch (Throwable t) {
             Logx.e("volume pager install failed", t);
         }
+    }
+
+    private static final boolean FORCE_LOCAL_MEDIA_AS_REMOTE = true;
+
+    /**
+     * 仅当调用方是 MediaSessions.onActiveSessionsUpdatedH(多应用音量遍历)时,
+     * 把 PlaybackType LOCAL(1) 读作 REMOTE(2),
+     * 使每个正在发声的应用都会成为面板上的独立音量列。
+     * 其余调用点不受影响。
+     */
+    private static void installPlaybackTypeForcer(XposedInterface api, ClassLoader cl)
+            throws Throwable {
+        Class<?> infoCls = Class.forName(
+                "android.media.session.MediaController$PlaybackInfo", true, cl);
+        java.lang.reflect.Method getPb = infoCls.getDeclaredMethod("getPlaybackType");
+        xp.hook(getPb).setId("FORCE-LOCAL-AS-REMOTE").intercept(chain -> {
+            Object r = chain.proceed();
+            if (!(r instanceof Integer)) return r;
+            StackTraceElement[] st = Thread.currentThread().getStackTrace();
+            boolean fromTraversal = false;
+            for (StackTraceElement e : st) {
+                if (e.getClassName().endsWith("MediaSessions")
+                        && e.getMethodName().contains("ActiveSessions")) {
+                    fromTraversal = true;
+                    break;
+                }
+            }
+            if (!fromTraversal) return r;
+            int t = (Integer) r;
+            return (t == 1) ? 2 : r;
+        });
+        Logx.i("playback-type forcer installed (LOCAL→REMOTE inside app traversal)");
     }
 
     private static void hook1(Method m) throws Throwable {
