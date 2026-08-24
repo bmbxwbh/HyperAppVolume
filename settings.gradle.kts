@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "HyperVolumePager"
 include(":app")
-include(":xposedstub")
+include(":libhook")

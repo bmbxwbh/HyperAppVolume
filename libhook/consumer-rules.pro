@@ -1,7 +1,5 @@
 # === libxposed API 102 官方推荐规则 ===
 # 来源: https://github.com/libxposed/api#for-module-developers
-# 作用: 让 META-INF/xposed/java_init.list 经 R8 内容适配后进入 APK,
-#       并保留 XposedModule 子类的公共无参构造器。
 -dontwarn io.github.libxposed.annotation.**
 -adaptresourcefilecontents META-INF/xposed/java_init.list
 -keep,allowoptimization,allowobfuscation public class * extends io.github.libxposed.api.XposedModule {
@@ -9,5 +7,5 @@
 }
 -keep,allowshrinking,allowoptimization,allowobfuscation class ** implements io.github.libxposed.api.XposedInterface$Hooker
 
-# 本模块大量按名称反射访问宿主字段/方法,整体保留以防混淆破坏
+# 本模块大量使用按名称反射,整体保留
 -keep class com.hyper.volumepager.libhook.** { *; }

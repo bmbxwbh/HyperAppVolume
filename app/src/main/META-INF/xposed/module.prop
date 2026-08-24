@@ -1,4 +1,0 @@
-minApiVersion=101
-targetApiVersion=102
-staticScope=true
-description=HyperOS volume panel per-app paging: page1 default 3 sliders, app volumes on dynamic extra pages

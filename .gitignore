@@ -7,3 +7,6 @@ app/build/
 captures/
 .externalNativeBuild/
 .cxx/
+
+# 参考样本(不提交)
+HyperCeiler（样本）/

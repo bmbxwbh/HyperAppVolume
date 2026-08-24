@@ -2,27 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:label="HyperOS 音量面板分页"
+        android:label="@string/app_name"
         android:description="@string/module_desc"
-        android:allowBackup="false">
-
-        <!-- Xposed 模块声明 -->
-        <meta-data
-            android:name="xposedmodule"
-            android:value="true" />
-        <meta-data
-            android:name="xposeddescription"
-            android:value="音量面板多应用音量分页:第1页保持默认媒体/铃声/闹钟三列,第2页承载各应用音量列,两区之间圆点指示切换" />
-        <!-- Api 版本 102 -->
-        <meta-data
-            android:name="xposedminversion"
-            android:value="102" />
-        <!-- 作用域声明:LSPosed 官方 Wiki 首选形式(resource-array),
-             启用模块时将自动默认勾选下列应用 -->
-        <meta-data
-            android:name="xposedscope"
-            android:resource="@array/xposedscope" />
-
-    </application>
+        android:allowBackup="false" />
 
 </manifest>
