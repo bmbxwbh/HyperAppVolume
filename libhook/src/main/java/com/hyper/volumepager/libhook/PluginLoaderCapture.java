@@ -37,10 +37,13 @@ public final class PluginLoaderCapture {
 
     private static final Set<ClassLoader> SEEN = new HashSet<>();
     private static volatile boolean pollStarted = false;
+    /** 由 install() 存入,testAndInstall 直接传给 VolumePatcher(避免循环取用) */
+    private static volatile XposedInterface savedXp;
 
     private PluginLoaderCapture() {}
 
     public static void install(final XposedInterface xp, final ClassLoader hostLoader) {
+        savedXp = xp;
         // ---------- 锚点A:Factory.create ----------
         int hooked = 0;
         try {
@@ -160,7 +163,7 @@ public final class PluginLoaderCapture {
         if (!ok) return;
         Logx.i("*** plugin classloader captured *** -> " + cl.getClass().getName());
         try {
-            VolumePatcher.install(VolumePatcher.xp(), cl);
+            VolumePatcher.install(savedXp, cl);
         } catch (Throwable t) {
             Logx.e("VolumePatcher.install failed", t);
         }
