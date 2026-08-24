@@ -96,6 +96,7 @@ public final class VolumePatcher {
     public static void install(final XposedInterface api, final ClassLoader hostClRef) {
         xp = api;
         hostClRef.getClass(); // NPE 快速失败
+        try {
 
         try {
             Class<?> rid = hostClRef.loadClass("com.android.systemui.miui.volume.R$id");
@@ -216,6 +217,10 @@ public final class VolumePatcher {
                     });
         } catch (Throwable ignore) { }
 
+        } catch (Throwable t) {
+            Logx.e("volume pager install failed", t);
+            return;
+        }
         installedFlag = true;
         Logx.i("volume pager hooks installed (api102, dynamic pages, PER_PAGE="
                 + PER_PAGE + ")");
@@ -289,6 +294,15 @@ public final class VolumePatcher {
     // ==================================================================
 
     private static void onInitPanelView(Object ctl) {
+        try {
+            initPanelViewInner(ctl);
+        } catch (Throwable t) {
+            Logx.e("onInitPanelView failed", t);
+        }
+    }
+
+    private static void initPanelViewInner(Object ctl)
+            throws ReflectiveOperationException {
         controller = ctl;
         refreshCc();
         DYNAMIC_VIEWS.clear();
@@ -366,10 +380,6 @@ public final class VolumePatcher {
         refreshDots();
         Logx.i("paged ui injected");
     }
-
-    // ==================================================================
-    // 页数 / 翻页
-    // ==================================================================
 
     private static int extraPageCount() {
         int n = DYNAMIC_VIEWS.size();
