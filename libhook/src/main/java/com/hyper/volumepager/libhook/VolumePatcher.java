@@ -577,6 +577,38 @@ public final class VolumePatcher {
         }
     }
 
+    /**
+     * 诊断:转储控制器当前收到的全部音频流
+     * (id / dynamic / level / muted / remoteLabel)与关键门禁字段。
+     */
+    @SuppressWarnings("unchecked")
+    private static void dumpStreams(Object ctl) throws Exception {
+        Object st = getField(ctl, "mState");
+        if (st == null) { Logx.i("state dump: mState null"); return; }
+        SparseArray<Object> states = (SparseArray<Object>) getField(st, "states");
+        StringBuilder sb = new StringBuilder("state dump:");
+        for (int i = 0; i < states.size(); i++) {
+            int k = states.keyAt(i);
+            Object s = states.valueAt(i);
+            boolean dyn = getBoolField(s, "dynamic");
+            int lvl = getIntField(s, "level");
+            boolean mute = getBoolField(s, "muted");
+            String rl = null;
+            try { rl = (String) getField(s, "remoteLabel"); } catch (Throwable ignored) { }
+            sb.append(" [id=").append(k)
+              .append(" dyn=").append(dyn)
+              .append(" lvl=").append(lvl)
+              .append(mute ? " mute" : "");
+            if (rl != null && !rl.isEmpty()) sb.append(" lbl=\"").append(rl).append('"');
+            sb.append(']');
+        }
+        boolean nd = getBoolField(ctl, "mNeedShowDialog");
+        int act = getIntField(ctl, "mActiveStream");
+        boolean cc = getBoolField(ctl, "isControlCenterPanel");
+        Logx.i(sb + " | needDlg=" + nd + " active=" + act + " cc=" + cc
+                + " expanded=" + expanded);
+    }
+
     private static void ensurePagedUi() {
         if (pageViewport != null && content != null && pageViewport.getParent() == content
                 && pageStrip != null) {
