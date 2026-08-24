@@ -188,6 +188,9 @@ public final class VolumePatcher {
 
     private static Object h2Intercept(Chain chain) throws Throwable {
         List<Object> a = chain.getArgs();
+        // 全量诊断:记录每一次 addColumn 调用的真实参数
+        Logx.i("addColumn call: stream=" + a.get(0)
+                + " z=" + a.get(1) + " z2=" + a.get(2));
         Object ctl = chain.getThisObject();
         Ctx c = CTX.computeIfAbsent(ctl, Ctx::new);
         if (Boolean.TRUE.equals(a.get(1)) && Boolean.TRUE.equals(a.get(2))) {
