@@ -16,10 +16,10 @@
         <meta-data
             android:name="xposedminversion"
             android:value="101" />
-        <!-- 作用域声明:标准 resource-array 形式,LSPosed 会自动推荐勾选「系统界面」 -->
+        <!-- 作用域声明(value 字符串形式:兼容 LSPosed/EdXposed 及 MT 等工具的解析) -->
         <meta-data
             android:name="xposedscope"
-            android:resource="@array/xposedscope" />
+            android:value="com.android.systemui" />
 
     </application>
 
