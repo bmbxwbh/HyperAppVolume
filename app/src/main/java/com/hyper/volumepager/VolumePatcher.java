@@ -96,6 +96,9 @@ public final class VolumePatcher {
     private static int colSelected = 0xE6FFFFFF;
     private static int colUnselected = 0x2EFFFFFF;
 
+    /** R$id.volume_dialog_container 运行时解析值(圆点行插入定位用) */
+    private static volatile int ID_container = 0;
+
     private VolumePatcher() {}
 
     // ==================================================================
@@ -103,6 +106,14 @@ public final class VolumePatcher {
     // ==================================================================
 
     public static void install(final ClassLoader cl) {
+        // 解析容器ID(圆点行按此定位插入点;失败则退回固定 index=1)
+        try {
+            Class<?> rid = cl.loadClass("com.android.systemui.miui.volume.R$id");
+            ID_container = XposedHelpers.getStaticIntField(rid, "volume_dialog_container");
+        } catch (Throwable t) {
+            Logx.w("resolve R$id.volume_dialog_container failed, use index fallback");
+        }
+
         final Class<?> vc = XposedHelpers.findClass(
                 "com.android.systemui.miui.volume.VolumePanelViewController", cl);
         final Class<?> cols = XposedHelpers.findClass(
@@ -146,6 +157,9 @@ public final class VolumePatcher {
         XC_MethodHook addHook = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
+                // 自愈:若捕获晚于首个面板创建(anchorC 晚装路径),
+                // 借任意列操作同步控制器引用,保证 ensurePagedUi/borrow 可用
+                if (param.thisObject != null) controller = param.thisObject;
                 Integer sid = PENDING_DYNAMIC.get();
                 if (sid == null) return;
                 PENDING_DYNAMIC.remove();
@@ -313,7 +327,15 @@ public final class VolumePatcher {
 
         Context ctx = content.getContext();
 
-        // ---- 视口 + 胶片条 ----
+        // ---- 视口 + 胶片条(重建时先抢救旧胶片条中的动态列,防孤儿视图)----
+        List<View> salvage = new ArrayList<>();
+        if (pageStrip != null) {
+            for (int i = pageStrip.getChildCount() - 1; i >= 0; i--) {
+                View c = pageStrip.getChildAt(i);
+                if (DYNAMIC_VIEWS.contains(c)) salvage.add(c);
+            }
+            Collections.reverse(salvage); // 保持原有顺序
+        }
         if (pageViewport != null && pageViewport.getParent() instanceof ViewGroup) {
             ((ViewGroup) pageViewport.getParent()).removeView(pageViewport);
         }
@@ -331,9 +353,13 @@ public final class VolumePatcher {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         pageViewport.addView(pageStrip);
+        for (View v : salvage) {
+            pageStrip.addView(v);
+            v.setTranslationX(0f);
+        }
         content.addView(pageViewport);
 
-        // ---- 圆点行(插在竖条区与静音/勿扰区之间:index=1)----
+        // ---- 圆点行(按 @volume_dialog_container 子项ID定位,插在其后=两区之间)----
         if (dotsRow != null && dotsRow.getParent() instanceof ViewGroup) {
             ((ViewGroup) dotsRow.getParent()).removeView(dotsRow);
         }
@@ -341,7 +367,15 @@ public final class VolumePatcher {
         dotsRow.setOrientation(LinearLayout.HORIZONTAL);
         dotsRow.setGravity(Gravity.CENTER);
         dotsRow.setVisibility(View.GONE);
-        dialogRoot.addView(dotsRow, 1);
+        int insertIdx = -1;
+        if (ID_container != 0) {
+            for (int i = 0; i < dialogRoot.getChildCount(); i++) {
+                View ch = dialogRoot.getChildAt(i);
+                if (ch != null && ch.getId() == ID_container) { insertIdx = i + 1; break; }
+            }
+        }
+        if (insertIdx < 0) insertIdx = Math.min(1, dialogRoot.getChildCount());
+        dialogRoot.addView(dotsRow, insertIdx);
 
         refreshDots();
         Logx.i("paged ui injected");
