@@ -40,9 +40,12 @@ jobs:
           ( cd inject_stage && zip -u "../$APK_PATH" META-INF/xposed/java_init.list META-INF/xposed/module.prop META-INF/xposed/scope.list )
           BT=$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -1)
           echo "build-tools: $BT"
-          KS="$HOME/.android/debug.keystore"
+          keytool -genkeypair -v -keystore hvp-debug.keystore -alias hvp \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=HyperVolumePager,O=HVP" >/dev/null 2>&1
           "$BT/zipalign" -f 4 "$APK_PATH" aligned.apk
-          "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
+          "$BT/apksigner" sign --ks hvp-debug.keystore --ks-pass pass:android --key-pass pass:android \
               --out signed-debug.apk aligned.apk
           "$BT/apksigner" verify signed-debug.apk
           mv signed-debug.apk "$APK_PATH"
