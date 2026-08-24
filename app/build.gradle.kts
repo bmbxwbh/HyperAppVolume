@@ -10,8 +10,8 @@ android {
         applicationId = "com.hyper.volumepager"
         minSdk = 30
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.2.0"
     }
 
     buildTypes {
@@ -25,10 +25,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    packaging {
+        resources {
+            // 保证 META-INF/xposed/*(java_init.list/scope.list/module.prop)完整进入 APK
+            merges += "META-INF/xposed/*"
+        }
+    }
 }
 
 dependencies {
-    // Xposed API 以源码桩形式内置于 :xposedstub(compileOnly,不打进 APK)
-    // 运行时由 LSPosed 注入真实实现;不再依赖外部 maven 构件
-    compileOnly(project(":xposedstub"))
+    // libxposed 现代API(compileOnly,运行时由管理器注入实现)
+    compileOnly("io.github.libxposed:api:102.0.0")
 }

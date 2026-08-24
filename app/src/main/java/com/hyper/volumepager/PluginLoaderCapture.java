@@ -1,6 +1,5 @@
 package com.hyper.volumepager;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -11,23 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
+import io.github.libxposed.api.XposedInterface;
 
 /**
- * 插件 ClassLoader 捕获器(三锚点,任一成功即可):
+ * 插件(miui.systemui.plugin)ClassLoader 捕获器 —— API102 版。
  *
- * 锚点A:hook 宿主 PluginInstance$Factory 的公开 create(...) 重载(AOSP 标准路径,
- *        本宿主实测签名:create(Context, ApplicationInfo, ComponentName, Class, PluginListener)),
- *        after 中从返回的 PluginInstance 反射扫描 ClassLoader 字段。
+ * 锚点A:hook 宿主 PluginInstance$Factory 的公开 create(...) 重载,
+ *        本宿主实测签名:create(Context, ApplicationInfo, ComponentName, Class, PluginListener),
+ *        从返回的 PluginInstance 反射扫描 ClassLoader 字段。
  * 锚点B:hook PluginInstance 全部构造器,同样字段扫描(兜底)。
- * 锚点C:MIUI 专属——PluginInstanceInjector.sClassLoaders(public static final Map)
- *        缓存了全部插件 ClassLoader。反射读取该静态字段会自动触发类初始化,
- *        守护线程轮询 Map 值,对每个新 loader 做"目标类可达性验证"后安装。
+ * 锚点C:MIUI 专属——PluginInstanceInjector.sClassLoaders(public static Map)
+ *        缓存全部插件 loader;反射轮询该 Map(读取会自动触发类初始化)。
  *
- * 捕获判定:testAndInstall() 尝试 loadClass(VolumePanelViewController),
- * 成功才安装,避免误伤其他插件。
+ * 捕获判定:候选 loader 必须 loadClass 成功 VolumePanelViewController 才安装。
  */
 public final class PluginLoaderCapture {
 
@@ -45,19 +40,23 @@ public final class PluginLoaderCapture {
 
     private PluginLoaderCapture() {}
 
-    public static void install(final ClassLoader hostLoader) {
+    public static void install(final XposedInterface xp, final ClassLoader hostLoader) {
         // ---------- 锚点A:Factory.create ----------
         int hooked = 0;
         try {
-            Class<?> factory = XposedHelpers.findClass(FACTORY_CLASS, hostLoader);
+            Class<?> factory = hostLoader.loadClass(FACTORY_CLASS);
             for (final Method m : factory.getDeclaredMethods()) {
                 if (!"create".equals(m.getName())) continue;
                 if (!Modifier.isPublic(m.getModifiers())) continue;
-                XposedBridge.hookMethod(m, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        safeExtract(param.getResult());
+                xp.hook(m).intercept(chain -> {
+                    Object result;
+                    try {
+                        result = chain.proceed();
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
                     }
+                    safeExtract(result);
+                    return result;
                 });
                 hooked++;
             }
@@ -67,35 +66,39 @@ public final class PluginLoaderCapture {
         }
 
         // ---------- 锚点B:PluginInstance 构造器 ----------
+        int ctors = 0;
         try {
-            Class<?> pi = XposedHelpers.findClass(INSTANCE_CLASS, hostLoader);
-            for (final Constructor<?> c : pi.getDeclaredConstructors()) {
-                XposedBridge.hookMethod(c, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) {
-                        safeExtract(param.thisObject);
+            Class<?> pi = hostLoader.loadClass(INSTANCE_CLASS);
+            for (final var c : pi.getDeclaredConstructors()) {
+                xp.hook(c).intercept(chain -> {
+                    Object result;
+                    try {
+                        result = chain.proceed();
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
                     }
+                    // 构造器:after 阶段 thisObject 即已初始化的实例
+                    safeExtract(chain.getThisObject());
+                    return result;
                 });
+                ctors++;
             }
-            Logx.i("anchorB hooked PluginInstance ctors");
+            // 构造器场景:thisObject 在 before 阶段为未初始化对象,after 后才有效;
+            // 因此改从 args 无法取,直接在 after 用 chain.getThisObject():
+            Logx.i("anchorB hooked PluginInstance ctors=" + ctors);
         } catch (Throwable t) {
             Logx.e("anchorB unavailable", t);
         }
 
-        // ---------- 锚点C:sClassLoaders 静态缓存轮询 ----------
+        // ---------- 锚点C:sClassLoaders 轮询 ----------
         try {
-            final Class<?> inj = XposedHelpers.findClass(INJECTOR_CLASS, hostLoader);
-            startPoll(inj);
+            startPoll(hostLoader.loadClass(INJECTOR_CLASS));
             Logx.i("anchorC polling armed");
         } catch (Throwable t) {
             Logx.e("anchorC unavailable", t);
         }
     }
 
-    /**
-     * 轮询 MIUI 静态缓存。首次 getStaticObjectField 会自动触发
-     * PluginInstanceInjector 的类初始化;VolumePatcher 安装成功后自动退出。
-     */
     private static synchronized void startPoll(final Class<?> injectorClass) {
         if (pollStarted) return;
         pollStarted = true;
@@ -103,8 +106,9 @@ public final class PluginLoaderCapture {
             long deadline = System.currentTimeMillis() + 180_000L;
             while (System.currentTimeMillis() < deadline && !VolumePatcher.isInstalled()) {
                 try {
-                    Object mapObj =
-                            XposedHelpers.getStaticObjectField(injectorClass, "sClassLoaders");
+                    Field f = injectorClass.getDeclaredField("sClassLoaders");
+                    f.setAccessible(true);
+                    Object mapObj = f.get(null);
                     if (mapObj instanceof Map) {
                         Object[] vals = ((Map<?, ?>) mapObj).values().toArray();
                         for (Object o : vals) {
@@ -126,8 +130,6 @@ public final class PluginLoaderCapture {
         t.setDaemon(true);
         t.start();
     }
-
-    // ------------------------------------------------------------------
 
     private static void safeExtract(Object pluginInstance) {
         if (pluginInstance == null) return;
@@ -158,7 +160,7 @@ public final class PluginLoaderCapture {
         if (!ok) return;
         Logx.i("*** plugin classloader captured *** -> " + cl.getClass().getName());
         try {
-            VolumePatcher.install(cl);
+            VolumePatcher.install(VolumePatcher.xp(), cl);
         } catch (Throwable t) {
             Logx.e("VolumePatcher.install failed", t);
         }
