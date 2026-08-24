@@ -18,6 +18,6 @@ android {
 }
 
 dependencies {
-    // libxposed API 102(compileOnlyApi:向上游 app 传递为 compileOnly,不进 APK)
-    compileOnlyApi("io.github.libxposed:api:102.0.0")
+    // libxposed API 102(compileOnly:运行时由管理器注入实现,不进 APK)
+    compileOnly("io.github.libxposed:api:102.0.0")
 }
